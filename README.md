@@ -1,5 +1,7 @@
 # K8s AIOps Doctor 🩺
 
+[![CI](https://github.com/Sherry1303/k8s-aiops-doctor/actions/workflows/ci.yml/badge.svg)](https://github.com/Sherry1303/k8s-aiops-doctor/actions/workflows/ci.yml)
+
 > 一个用 Python 写的 **Kubernetes 故障诊断 + 自愈机器人**：`watch` 监听 Pod 异常 → 采集上下文 → 大模型（DeepSeek）给出根因与修复建议 → 可选**自动自愈**（备份清单、换镜像、重建 Pod）→ 异步发送**排版精美的 HTML 邮件告警**。
 
 默认 **100% 只读**，只有显式加 `--heal` 才会修改集群；即使开启自愈，也有 5 道安全闸门兜底。
@@ -78,15 +80,44 @@ k8s-aiops-doctor/
 ├── k8s_doctor.py          # 主程序（诊断 + 自愈 + 邮件，单文件无第三方业务依赖）
 ├── broken-pod.yaml        # 故障注入样例：镜像 tag 故意写成不存在的 does-not-exist
 ├── diagnosis-report.md    # 一次真实运行的完整输出留档（演示效果）
-├── requirements.txt       # Python 依赖
+├── requirements.txt       # 运行期依赖（kubernetes / openai / pyyaml）
+├── requirements-dev.txt   # 开发与 CI 依赖（pytest，内部 -r requirements.txt）
+├── pytest.ini             # pytest 配置（pythonpath=. / testpaths=tests）
+├── tests/                 # 离线回归测试：不需要集群、不需要 API Key、不联网
+├── .github/workflows/     # GitHub Actions：compileall + pytest + CLI 冒烟
 ├── README.md
 ├── LICENSE                # MIT 许可证
 ├── .env.example           # 环境变量样例（复制为 .env 后填自己的 Key）
-├── .gitignore             # 忽略 .env / 运行期产物 / 缓存
+├── .gitignore             # 忽略 .env / 运行期产物 / pytest 缓存
 ├── docs/images/           # README 里的效果预览截图
 ├── heal-manifests/        # 运行期产物：自愈时的原始/修复后 Pod 清单（不入库）
 └── reports/               # 运行期产物：HTML 邮件报告（不入库，可浏览器预览）
 ```
+
+---
+
+## ✅ 测试与 CI
+
+仓库自带一套**离线**回归测试：不需要集群、不需要 API Key、不联网，克隆下来就能跑。
+
+```powershell
+pip install -r requirements-dev.txt
+python -m pytest -q          # 35 个用例，约 6 秒跑完
+```
+
+覆盖范围（`tests/test_k8s_doctor.py`）：
+
+| 分组 | 覆盖内容 |
+|---|---|
+| 故障检测 | `ImagePullBackOff` / `CrashLoopBackOff` / Pod `Failed` 阶段识别、`--strict` 白名单、Pod 没有 `status` 等边界 |
+| 告警冷却 | 故障指纹把 `ErrImagePull ↔ ImagePullBackOff` 归为一类、指纹不含 `restartCount`、冷却窗口内不重复分析 |
+| 自愈安全闸门 | 不加 `--heal` 绝不碰集群、命名空间白名单、只处理镜像拉取类故障、控制器托管的 Pod 不代删、次数/冷却上限 |
+| 自愈清单 | 镜像注入、剔除 `status` / `nodeName` / 服务端 metadata、不污染原始对象、只改目标容器 |
+| 报告与邮件 | Markdown→HTML（表格/代码块/列表）、正文 HTML 转义、报告落盘命名、`--email-dry-run` 只落盘不发信、465=SSL / 587=STARTTLS |
+| CLI 冒烟 | `--help` 退出码 0；没有集群时给中文提示 + 退出码 1（不抛 traceback）；默认参数必须是只读 |
+
+CI（`.github/workflows/ci.yml`）在每次 push / PR 时依次执行 `python -m compileall` → `python -m pytest -q` → `python k8s_doctor.py --help`，
+矩阵覆盖 **Python 3.9（ubuntu-24.04）/ 3.13 / 3.14 × Ubuntu + Windows**（Windows 也是本项目的开发环境，专门用来兜住控制台编码与路径问题）。
 
 ---
 

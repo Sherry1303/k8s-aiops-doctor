@@ -1,0 +1,6 @@
+# 开发 / CI 依赖：在运行期依赖之上追加测试工具
+# 安装：pip install -r requirements-dev.txt
+-r requirements.txt
+
+# 测试框架（CI 里跑 tests/ 下的离线用例，不需要集群和 API Key）
+pytest>=8.0
