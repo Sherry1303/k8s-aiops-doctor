@@ -6,6 +6,24 @@
 
 ---
 
+## 📸 效果预览
+
+> 以下三张均为**真实运行产物**：终端图由真实 stdout 日志渲染（内容未做改写，仅按视口裁切）；邮件图是程序自己生成的 HTML 报告截图（完整长报告见 `reports/*.html`）。
+
+**① 终端：AI 根因分析报告**（`--once`，只读模式）
+
+![终端 AI 诊断报告](docs/images/terminal-ai-report.png)
+
+**② 终端：自愈执行全过程**（`--once --heal`，备份 → 换镜像 → 删除 → 重建 → 校验）
+
+![终端自愈执行过程](docs/images/terminal-self-heal.png)
+
+**③ 邮件告警：自动渲染的 HTML 报告**（截取报告开头，含结论与证据表）
+
+![HTML 邮件报告](docs/images/email-html-report.png)
+
+---
+
 ## ✨ 项目亮点
 
 | 能力 | 说明 |
@@ -62,7 +80,10 @@ k8s-aiops-doctor/
 ├── diagnosis-report.md    # 一次真实运行的完整输出留档（演示效果）
 ├── requirements.txt       # Python 依赖
 ├── README.md
-├── .gitignore
+├── LICENSE                # MIT 许可证
+├── .env.example           # 环境变量样例（复制为 .env 后填自己的 Key）
+├── .gitignore             # 忽略 .env / 运行期产物 / 缓存
+├── docs/images/           # README 里的效果预览截图
 ├── heal-manifests/        # 运行期产物：自愈时的原始/修复后 Pod 清单（不入库）
 └── reports/               # 运行期产物：HTML 邮件报告（不入库，可浏览器预览）
 ```
@@ -210,6 +231,8 @@ broken-pod   1/1     Running   0          24s
 * 概览表：命名空间 / Pod 名称 / 故障状态 / 镜像 / 节点 / 重启次数 / 分析模型 / 生成时间
 * 正文：大模型输出的 Markdown 报告自动转成 HTML（**标题 / 表格 / 代码块 / 列表 / 加粗** 都保留样式）
 * 邮件为 `multipart/alternative` 双版本（纯文本 + HTML），中文主题自动做 RFC2047 编码，兼容各类邮箱客户端
+
+![HTML 邮件报告预览](docs/images/email-html-report.png)
 
 不想发信只想看效果：
 
