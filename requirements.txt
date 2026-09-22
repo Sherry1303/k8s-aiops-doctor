@@ -1,0 +1,11 @@
+# K8s 故障自愈机器人的 Python 依赖
+# 安装：pip install -r requirements.txt
+
+# Kubernetes 官方 Python 客户端：提供 list / get / watch / 容器日志读取等能力
+kubernetes>=29.0.0
+
+# OpenAI 兼容 SDK：用 base_url 指向 DeepSeek 官方接口，调用 deepseek-chat 模型
+openai>=1.30.0
+
+# PyYAML：自愈模式(--heal)写出/读取 Pod 清单用（kubernetes 客户端已传递依赖，这里显式声明）
+pyyaml>=6.0

@@ -1,0 +1,33 @@
+# ---------------------------------------------------------------------------
+# 模拟故障用的 Pod：镜像 tag 故意写成不存在的 does-not-exist
+# 预期表现：kubectl get pod broken-pod 会显示 ImagePullBackOff / ErrImagePull
+# 用法：kubectl apply -f broken-pod.yaml
+# 清理：kubectl delete -f broken-pod.yaml
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: Pod
+metadata:
+  name: broken-pod
+  namespace: default
+  labels:
+    app: broken-pod
+    purpose: k8s-aiops-doctor-demo
+spec:
+  # 容器一直失败重启，配合 CrashLoopBackOff 场景演示
+  restartPolicy: Always
+  containers:
+    - name: broken-pod
+      # [故障点] 该 tag 在 Docker Hub 上不存在，必然拉取失败
+      image: nginx:does-not-exist
+      imagePullPolicy: Always
+      ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
